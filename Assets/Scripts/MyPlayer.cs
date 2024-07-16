@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Photon.Pun;
 using System;
 
@@ -17,15 +18,26 @@ public class MyPlayer : MonoBehaviourPun, IPunObservable
     private GameObject sceneCamera;
     public GameObject playerCamera;
 
-
+    public SpriteRenderer sr;
+    public Text nameText;
+    private Rigidbody2D rb;
+    private bool IsGrounded;
     void Start()
     {
+
         if (photonView.IsMine)
         {
-            playerCamera = GameObject.Find("Main Camera");
+            nameText.text = PhotonNetwork.NickName;
+
+            rb = GetComponent<Rigidbody2D>();
+            sceneCamera = GameObject.Find("Main Camera");
 
             sceneCamera.SetActive(false);
             playerCamera.SetActive(true);
+        }
+        else
+        {
+            nameText.text = pv.Owner.NickName;
         }
     }
     void Update()
@@ -49,8 +61,65 @@ public class MyPlayer : MonoBehaviourPun, IPunObservable
     {
         var move = new Vector3(Input.GetAxis("Horizontal"), 0);
         transform.position += move * moveSpeed * Time.deltaTime;
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+        {
+            sr.flipX = false;
+            pv.RPC("OnDirectionChange_RIGHT", RpcTarget.Others);
+        }
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+        {
+            sr.flipX = true;
+            pv.RPC("OnDirectionChange_LEFT", RpcTarget.Others);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Space) && IsGrounded)
+        {
+            Jump();
+        }
+
     }
 
+    [PunRPC]
+    void OnDirectionChange_LEFT()
+    {
+        sr.flipX = true;
+
+    }
+
+    [PunRPC]
+    void OnDirectionChange_RIGHT()
+    {
+        sr.flipX = false;
+
+    }
+
+    void OnCollisionEnter2D(Collision2D col)
+    {
+        if (photonView.IsMine)
+        {
+            if (col.gameObject.tag == "Ground")
+            {
+                IsGrounded = true;
+            }
+        }
+    }
+
+    void OnCollisionExit2D(Collision2D col)
+    {
+        if (photonView.IsMine)
+        {
+            if (col.gameObject.tag == "Ground")
+            {
+                IsGrounded = false;
+            }
+        }
+    }
+
+    void Jump()
+    {
+        rb.AddForce(Vector2.up * jumpforce);
+    }
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         if (stream.IsWriting)

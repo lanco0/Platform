@@ -6,27 +6,34 @@ using Photon.Realtime;
 
 public class Launcher : MonoBehaviourPunCallbacks
 {
+
     public GameObject connectedScreen;
-    public GameObject DisconnectedScreen;
-    public void OnClick_ConnectButton()
+    public GameObject disconnectedScreen;
+
+
+    public void OnClick_ConnectBtn()
     {
         PhotonNetwork.ConnectUsingSettings();
     }
 
+
     public override void OnConnectedToMaster()
     {
+
         PhotonNetwork.JoinLobby(TypedLobby.Default);
     }
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        DisconnectedScreen.SetActive(true);
+        disconnectedScreen.SetActive(true);
     }
+
     public override void OnJoinedLobby()
     {
-        if(DisconnectedScreen.activeSelf)
-            DisconnectedScreen.SetActive(false);
+        if (disconnectedScreen.activeSelf)
+            disconnectedScreen.SetActive(false);
+
         connectedScreen.SetActive(true);
     }
-    
+
 }
